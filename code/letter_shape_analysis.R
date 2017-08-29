@@ -50,4 +50,22 @@ for(j in 1:length(curvelist)){
   }
 }
 
+letter_distmat <- data.frame(letter_distmat)
 save(letter_distmat, file="../data/letter_distmat.RData")
+
+# protoclust
+library(protoclust)
+distmat <- as.matrix(letter_distmat)
+distmat <- 0.5*(distmat + t(distmat))
+distmat <- distmat - diag(diag(distmat))
+
+prot <- protoclust(distmat)
+cut <- protocut(prot, k = 5)
+protos <- cut$protos
+
+
+plot(curvelist[[protos[5]]][1,], curvelist[[protos[5]]][2,], type="l")
+
+
+library(rsconnect)
+rsconnect::deployApp('letter_explore')
