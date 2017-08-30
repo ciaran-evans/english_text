@@ -6,10 +6,25 @@ library(fdasrvf)
 library(protoclust)
 library(Rtsne)
 library(jpeg)
+library(reshape2)
 
 theme_set(theme_minimal())
 
 load("data/letter_distmat.RData")
+
+order_points_for_curve <- function(beta){
+  current <- beta[,1]
+  beta <- beta[,-1]
+  newmat <- current
+  while(ncol(beta) > 2){
+    ind <- which.min(colSums((beta - current)^2))
+    current <- beta[,ind]
+    beta <- beta[,-ind]
+    newmat <- cbind(newmat, current)
+  }
+  newmat <- cbind(newmat, beta[,1])
+  return(newmat)
+}
 
 fileNames <- Sys.glob("images/contour_G/*.jpg")
 origFiles <- Sys.glob("images/G/*.jpg")
