@@ -15,8 +15,7 @@ def main():
 
     for name in filelist:
         im = cv2.imread(name)
-        #newname = name.replace('character', 'newcharacter')
-        newname = newname.replace('G', 'contour_G')
+        newname = name.replace('G', 'contour_G')
 
         im = cv2.copyMakeBorder(im,10,10,10,10,cv2.BORDER_CONSTANT,value=WHITE)
         imnew = 0*im + 255
@@ -24,9 +23,9 @@ def main():
         ret,thresh = cv2.threshold(imgray,127,255,0)
 
         # Remove some small noise if any.
-        dilate = cv2.dilate(thresh,None)
-        erode = cv2.erode(dilate,None)
-        contours, hierarchy = cv2.findContours(erode,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        erode = cv2.erode(thresh, None, iterations = 2)
+        dilate = cv2.dilate(erode, None, iterations = 2)
+        contours, hierarchy = cv2.findContours(dilate,cv2.RETR_TREE,cv2.CHAIN_APPROX_TC89_KCOS)
         cv2.drawContours(imnew,contours,-1,(0,0,0),1)
         # cv2.imshow('image', imnew)
         # cv2.waitKey(0)

@@ -111,8 +111,11 @@ shinyServer(function(input, output, session) {
   
   output$image_plot <- renderPlot({
     
-    if(input$plot_jpg){
+    if(input$plot_jpg == "Original JPEG"){
       image <- readJPEG(origFiles[as.numeric(input$imageChoiceProt)])
+      plot(as.raster(image))
+    } else if(input$plot_jpg == "Contour JPEG") {
+      image <- readJPEG(fileNames[as.numeric(input$imageChoiceProt)])
       plot(as.raster(image))
     } else {
       temp <- curvelist[[as.numeric(input$imageChoiceProt)]] %>%

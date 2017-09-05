@@ -9,7 +9,8 @@ navbarPage("Visualizing Puffs",
                                    min = 1, max = 10, value = 5, step = 1),
                        uiOutput("clust_choice_proto"),
                        uiOutput("image_choice_proto"),
-                       checkboxInput("plot_jpg", "Plot jpg?")
+                       radioButtons("plot_jpg", "Letter display preference",
+                                    choices = c("Curves", "Original JPEG", "Contour JPEG"))
                         
                         ),
                       mainPanel(
