@@ -14,7 +14,7 @@ navbarPage("Visualizing Puffs",
                         
                         ),
                       mainPanel(
-                        plotOutput("image_plot"),
+                        plotOutput("image_plot", width="400px", height="400px"),
                         plotOutput("protos_plot")
                       )
                     )

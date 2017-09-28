@@ -4,42 +4,42 @@ library(dplyr)
 library(fdasrvf)
 
 
-order_points_for_curve <- function(beta){
-  current <- beta[,1]
-  beta <- beta[,-1]
-  newmat <- current
-  while(ncol(beta) > 2){
-    ind <- which.min(colSums((beta - current)^2))
-    current <- beta[,ind]
-    beta <- beta[,-ind]
-    newmat <- cbind(newmat, current)
-  }
-  newmat <- cbind(newmat, beta[,1])
-  return(newmat)
-}
+# order_points_for_curve <- function(beta){
+#   current <- beta[,1]
+#   beta <- beta[,-1]
+#   newmat <- current
+#   while(ncol(beta) > 2){
+#     ind <- which.min(colSums((beta - current)^2))
+#     current <- beta[,ind]
+#     beta <- beta[,-ind]
+#     newmat <- cbind(newmat, current)
+#   }
+#   newmat <- cbind(newmat, beta[,1])
+#   return(newmat)
+# }
 
 
-fileNames <- Sys.glob("../images/contour_G/*.jpg")
+fileNames <- Sys.glob("../data/character*")
 
 curvelist <- list()
 i <- 1
+num_comps <- c()
 for(name in fileNames){
-  im <- readJPEG(name)
-  immat <- im[,,1] + im[,,2] + im[,,3]
-  
-  image <- melt(immat)
-  names(image) <- c("x", "y", "val")
-  curvelist[[i]] <- image %>%
-    mutate(val = ifelse(val < 1.5, 1, 0)) %>%
-    filter(val == 1, x > min(x) + 5, x < max(x) - 5, y > min(y) + 5, y < max(y) - 5) %>%
-    select(x,y) %>%
-    t() %>%
-    order_points_for_curve() %>%
-    resamplecurve(N=200)
-  
+  df <- read_csv(name)
+  names(df) <- c("junk", "x", "y", "contour")
+  df <- df %>%
+    select(-junk)
+  #print(max(df$contour))
+  curvelist[[i]] <- df
+  num_comps[i] <- max(df$contour) +1
   i <- i + 1
 }
 
+curvelist <- curvelist[num_comps==1]
+
+for(i in 1:length(curvelist)){
+  curvelist[[i]] <- resamplecurve(t(curvelist[[i]][,1:2]), 400)
+}
 
 letter_distmat <- matrix(nrow=length(curvelist), ncol=length(curvelist))
 

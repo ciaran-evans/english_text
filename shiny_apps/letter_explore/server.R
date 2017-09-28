@@ -6,46 +6,76 @@ library(fdasrvf)
 library(protoclust)
 library(Rtsne)
 library(jpeg)
+library(readr)
 library(reshape2)
 
 theme_set(theme_minimal())
 
 load("data/letter_distmat.RData")
 
-order_points_for_curve <- function(beta){
-  current <- beta[,1]
-  beta <- beta[,-1]
-  newmat <- current
-  while(ncol(beta) > 2){
-    ind <- which.min(colSums((beta - current)^2))
-    current <- beta[,ind]
-    beta <- beta[,-ind]
-    newmat <- cbind(newmat, current)
-  }
-  newmat <- cbind(newmat, beta[,1])
-  return(newmat)
-}
+# order_points_for_curve <- function(beta){
+#   current <- beta[,1]
+#   beta <- beta[,-1]
+#   newmat <- current
+#   while(ncol(beta) > 2){
+#     ind <- which.min(colSums((beta - current)^2))
+#     current <- beta[,ind]
+#     beta <- beta[,-ind]
+#     newmat <- cbind(newmat, current)
+#   }
+#   newmat <- cbind(newmat, beta[,1])
+#   return(newmat)
+# }
 
-fileNames <- Sys.glob("images/contour_G/*.jpg")
-origFiles <- Sys.glob("images/G/*.jpg")
+#fileNames <- Sys.glob("images/contour_G/*.jpg")
+origFiles <- Sys.glob("images/G/character*.jpg")
+
+# curvelist <- list()
+# i <- 1
+# for(name in fileNames){
+#   im <- readJPEG(name)
+#   immat <- im[,,1] + im[,,2] + im[,,3]
+#   
+#   image <- melt(immat)
+#   names(image) <- c("x", "y", "val")
+#   curvelist[[i]] <- image %>%
+#     mutate(val = ifelse(val < 1.5, 1, 0)) %>%
+#     filter(val == 1, x > min(x) + 5, x < max(x) - 5, y > min(y) + 5, y < max(y) - 5) %>%
+#     select(x,y) %>%
+#     t() %>%
+#     order_points_for_curve() %>%
+#     resamplecurve(N=200)
+#   
+#   i <- i + 1
+# }
+
+fileNames <- Sys.glob("data/character*")
+
+print(fileNames)
+print(origFiles)
 
 curvelist <- list()
 i <- 1
+num_comps <- c()
 for(name in fileNames){
-  im <- readJPEG(name)
-  immat <- im[,,1] + im[,,2] + im[,,3]
-  
-  image <- melt(immat)
-  names(image) <- c("x", "y", "val")
-  curvelist[[i]] <- image %>%
-    mutate(val = ifelse(val < 1.5, 1, 0)) %>%
-    filter(val == 1, x > min(x) + 5, x < max(x) - 5, y > min(y) + 5, y < max(y) - 5) %>%
-    select(x,y) %>%
-    t() %>%
-    order_points_for_curve() %>%
-    resamplecurve(N=200)
-  
+  df <- read_csv(name)
+  names(df) <- c("junk", "x", "y", "contour")
+  df <- df %>%
+    select(-junk)
+  #print(max(df$contour))
+  curvelist[[i]] <- df
+  num_comps[i] <- max(df$contour) +1
   i <- i + 1
+}
+
+curvelist <- curvelist[num_comps==1]
+fileNames <- fileNames[num_comps==1]
+origFiles <- origFiles[num_comps==1]
+
+origCurves <- curvelist
+
+for(i in 1:length(curvelist)){
+  curvelist[[i]] <- resamplecurve(t(curvelist[[i]][,1:2]), 400)
 }
 
 shinyServer(function(input, output, session) {
@@ -82,12 +112,12 @@ shinyServer(function(input, output, session) {
   
   output$protos_plot <- renderPlot({
     proto_curves() %>%
-      ggplot(aes(x = x, y = y)) +
+      ggplot(aes(x = x, y = -1*y)) +
       geom_path() +
       facet_wrap(~clust) +
       annotate("text", 
                label = paste("Number of letters:",
-                             clust_counts()), x = 40, y = 65)
+                             clust_counts()), x = 40, y = 0)
   })
   
   
@@ -115,19 +145,22 @@ shinyServer(function(input, output, session) {
       image <- readJPEG(origFiles[as.numeric(input$imageChoiceProt)])
       plot(as.raster(image))
     } else if(input$plot_jpg == "Contour JPEG") {
-      image <- readJPEG(fileNames[as.numeric(input$imageChoiceProt)])
-      plot(as.raster(image))
+      origCurves[[as.numeric(input$imaeChoiceProt)]] %>%
+        ggplot(aes(x = x, y = -1*y)) +
+        geom_path()
     } else {
       temp <- curvelist[[as.numeric(input$imageChoiceProt)]] %>%
         t() %>%
         data.frame()
       names(temp) <- c("x", "y")
       temp %>%
-        ggplot(aes(x = x, y = y)) +
-        geom_path()
+        ggplot(aes(x = x, y = -1*y)) +
+        geom_path() +
+        scale_x_continuous(limits=c(0, 65)) +
+        scale_y_continuous(limits=c(-65, 0))
     }
     
-  })
+  }, width=400, height=400)
   
   
 })
