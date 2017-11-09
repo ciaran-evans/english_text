@@ -30,15 +30,18 @@ def main():
         ret,thresh = cv2.threshold(imgray,127,255,0)
 
         # Remove some small noise if any.
-        dilate = cv2.dilate(thresh, None, iterations = 2)
-        erode = cv2.erode(dilate, None, iterations = 2)
+        dilate = cv2.dilate(thresh, None, iterations = 1)
+        erode = cv2.erode(dilate, None, iterations = 1)
         #dilate = cv2.dilate(erode, None, iterations = 1)
+        #imnew = erode
+        imnew = cv2.GaussianBlur(erode, (3,3), 0)
+        #imnew = cv2.blur(erode, (5,5))
 
-        cv2.imshow('image', erode)
+        cv2.imshow('image', imnew)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-        contours, hierarchy = cv2.findContours(dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        contours, hierarchy = cv2.findContours(imnew, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         
         contour_df = pd.concat(
         	[pd.DataFrame(newcontours.tolist())[0].apply(pd.Series).assign(cont = i) 

@@ -28,8 +28,8 @@ for(name in fileNames){
   df <- read_csv(name)
   names(df) <- c("junk", "x", "y", "contour")
   df <- df %>%
-    select(-junk)
-  #print(max(df$contour))
+    select(-junk) %>%
+    mutate(file = basename(name))
   curvelist[[i]] <- df
   num_comps[i] <- max(df$contour) +1
   i <- i + 1
@@ -37,7 +37,9 @@ for(name in fileNames){
 
 curvelist <- curvelist[num_comps==1]
 
+curve_names <- c()
 for(i in 1:length(curvelist)){
+  curve_names[i] <- curvelist[[i]]$file[1]
   curvelist[[i]] <- resamplecurve(t(curvelist[[i]][,1:2]), 400)
 }
 
