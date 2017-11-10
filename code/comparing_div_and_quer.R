@@ -3,7 +3,8 @@ source("letter_helper_funs.R")
 k = 4
 num_clust = 16
 
-filelist_quer <- Sys.glob('../images/G/queries/*.jpg')
+#filelist_quer <- Sys.glob('../images/G/queries/*.jpg')
+filelist_quer <- Sys.glob('~/Desktop/trimmed_queries_divorce/queries/y/*.png')
 n_quer <- length(filelist_quer)
 idist_quer <- get_idist(filelist_quer, 64, 96, k)
 proto_quer = protoclust(idist_quer)
@@ -13,7 +14,8 @@ par(mfrow=c(4,4))
 plot_cut(cut_quer, filelist_quer)
 
 
-filelist_div <- Sys.glob('../images/G/divorce/*.jpg')
+#filelist_div <- Sys.glob('../images/G/divorce/*.jpg')
+filelist_div <- Sys.glob('~/Desktop/trimmed_queries_divorce/divorce/y/*.png')
 n_div <- length(filelist_div)
 idist_div <- get_idist(filelist_div, 64, 96, k)
 proto_div = protoclust(idist_div)
@@ -51,10 +53,14 @@ proto_div$height[n_div - 15]
 proto_full <- protoclust(idist_full)
 cut_full <- protocut(proto_full, 16)
 plot_cut(cut_full, filelist_full)
-plot_cluster(cut_full, filelist_full, 3)
+plot_cluster(cut_full, filelist_full, 7)
 
-
-
+subfiles <- filelist_full[cut_full$cl == 5]
+idist_sub <- get_idist(subfiles, 64, 96, k)
+proto_sub <- protoclust(idist_sub)
+cut_sub <- protocut(proto_sub, 16)
+plot_cut(cut_sub, subfiles)
+plot_cluster(cut_sub, subfiles, 6)
 
 ## do some sub-sampling
 k = 3

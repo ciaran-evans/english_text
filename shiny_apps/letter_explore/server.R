@@ -11,7 +11,7 @@ library(reshape2)
 
 theme_set(theme_minimal())
 
-load("data/letter_distmat.RData")
+load("../../data/letter_distmat.RData")
 
 # order_points_for_curve <- function(beta){
 #   current <- beta[,1]
@@ -28,49 +28,39 @@ load("data/letter_distmat.RData")
 # }
 
 #fileNames <- Sys.glob("images/contour_G/*.jpg")
-origFiles <- Sys.glob("images/G/character*.jpg")
+#origFiles <- Sys.glob("images/G/character*.jpg")
 
-# curvelist <- list()
-# i <- 1
-# for(name in fileNames){
-#   im <- readJPEG(name)
-#   immat <- im[,,1] + im[,,2] + im[,,3]
-#   
-#   image <- melt(immat)
-#   names(image) <- c("x", "y", "val")
-#   curvelist[[i]] <- image %>%
-#     mutate(val = ifelse(val < 1.5, 1, 0)) %>%
-#     filter(val == 1, x > min(x) + 5, x < max(x) - 5, y > min(y) + 5, y < max(y) - 5) %>%
-#     select(x,y) %>%
-#     t() %>%
-#     order_points_for_curve() %>%
-#     resamplecurve(N=200)
-#   
-#   i <- i + 1
-# }
-
-fileNames <- Sys.glob("data/character*")
-
+fileNames <- Sys.glob("../../data/character*")
 print(fileNames)
-print(origFiles)
+
+#print(fileNames)
+#print(origFiles)
 
 curvelist <- list()
 i <- 1
 num_comps <- c()
+curve_names <- c()
 for(name in fileNames){
   df <- read_csv(name)
   names(df) <- c("junk", "x", "y", "contour")
   df <- df %>%
-    select(-junk)
-  #print(max(df$contour))
+    select(-junk) %>%
+    mutate(file = basename(name))
   curvelist[[i]] <- df
   num_comps[i] <- max(df$contour) +1
+  curve_names[i] <- basename(name)
   i <- i + 1
 }
 
 curvelist <- curvelist[num_comps==1]
-fileNames <- fileNames[num_comps==1]
-origFiles <- origFiles[num_comps==1]
+curve_names <- curve_names[num_comps==1]
+
+#curvelist <- curvelist[-c(16, 36, 38)]
+
+#letter_distmat <- letter_distmat[-c(16, 36, 38), -c(16, 36, 38)]
+
+#fileNames <- fileNames[num_comps==1]
+#origFiles <- origFiles[num_comps==1]
 
 origCurves <- curvelist
 
@@ -142,12 +132,9 @@ shinyServer(function(input, output, session) {
   output$image_plot <- renderPlot({
     
     if(input$plot_jpg == "Original JPEG"){
-      image <- readJPEG(origFiles[as.numeric(input$imageChoiceProt)])
+      image = readJPEG(paste('../../images/G/',curve_names[as.numeric(input$imageChoiceProt)],
+                             '.jpg', sep=''))
       plot(as.raster(image))
-    } else if(input$plot_jpg == "Contour JPEG") {
-      origCurves[[as.numeric(input$imaeChoiceProt)]] %>%
-        ggplot(aes(x = x, y = -1*y)) +
-        geom_path()
     } else {
       temp <- curvelist[[as.numeric(input$imageChoiceProt)]] %>%
         t() %>%
@@ -161,6 +148,40 @@ shinyServer(function(input, output, session) {
     }
     
   }, width=400, height=400)
+  
+  
+  output$clust_choice_moreclust <- renderUI({
+    sliderInput("clustChoiceMoreClust", "Choose cluster",
+                min=1, max=input$num_clust_proto, value = 1, step = 1)
+  })
+  
+  output$clusterGrid <- renderPlot({
+    
+    distmat <- as.matrix(letter_distmat)
+    distmat <- 0.5*(distmat + t(distmat))
+    distmat <- distmat - diag(diag(distmat))
+    
+    prot <- protoclust(distmat)
+    cut <- protocut(prot, k = input$num_clust_proto)
+    ids <- which(cut$cl == input$clustChoiceMoreClust)
+    
+    curve_data = data.frame()
+    for(i in 1:length(curvelist)){
+      curve_data <- curve_data %>%
+        rbind(curvelist[[i]] %>% t() %>% data.frame() %>% mutate(id = i))
+    }
+    
+      temp <- curve_data %>%
+        filter(id %in% ids)
+      names(temp) <- c("x", "y", "id")
+      temp %>%
+        ggplot(aes(x = x, y = -1*y)) +
+        geom_path() +
+        scale_x_continuous(limits=c(0, 65)) +
+        scale_y_continuous(limits=c(-65, 0)) +
+        facet_wrap(~id)
+    
+  })
   
   
 })

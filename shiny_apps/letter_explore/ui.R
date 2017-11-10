@@ -18,5 +18,16 @@ navbarPage("Visualizing Puffs",
                         plotOutput("protos_plot")
                       )
                     )
+           ),
+           
+           tabPanel("More on Clustering",
+                    sidebarLayout(
+                      sidebarPanel(
+                        uiOutput("clust_choice_moreclust")
+                      ),
+                      mainPanel(
+                        plotOutput("clusterGrid")
+                      )
+                    )
            )
 )

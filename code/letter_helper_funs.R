@@ -1,6 +1,7 @@
 library(jpeg)
 library(vegan)
 library(protoclust)
+library(png)
 
 
 extlog <- function(x){
@@ -18,7 +19,7 @@ get_probs <- function(dat){
 get_probdist <- function(filelist, H, W){
   dat = matrix(0,nrow=length(filelist),ncol=H*W)
   for(i in 1:length(filelist)){
-    a = readJPEG(filelist[i], native=FALSE)
+    a = readPNG(filelist[i], native=FALSE)
     dat[i,] = as.numeric(a)
   }
   dat <- round(dat)
@@ -43,7 +44,7 @@ get_idist <- function(filelist, H, W, k){
 plot_cut <- function(cut, filelist){
   count = 1
   for(id in cut$protos){
-    img <- readJPEG(filelist[id])
+    img <- readPNG(filelist[id])
     plot(as.raster(img))
     title(table(cut$cl)[count])
     count = count + 1
@@ -53,7 +54,7 @@ plot_cut <- function(cut, filelist){
 plot_cluster <- function(cut, filelist, clust){
   subfiles <- filelist[cut$cl == clust]
   for(file in subfiles){
-    img <- readJPEG(file)
+    img <- readPNG(file)
     plot(as.raster(img))
   }
 }
