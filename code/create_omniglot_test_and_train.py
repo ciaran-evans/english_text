@@ -219,7 +219,7 @@ if __name__ == "__main__":
     with open("../images/omniglot/test_same_pairs.csv", 'w') as f:
         csv.writer(f).writerows(test_same)
 
-    print("Creating training samples: different pairs")
+    print("Creating test samples: different pairs")
     test_diff = sample_different(test_langs, (0, 15), (0, 20), 5000)
     with open("../images/omniglot/test_different_pairs.csv", 'w') as f:
         csv.writer(f).writerows(test_diff)
